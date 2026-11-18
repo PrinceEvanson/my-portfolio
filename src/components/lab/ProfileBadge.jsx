@@ -286,7 +286,7 @@ export default function ProfileBadge({ explored, chapters, lastStamp }) {
 
                     <div className="grid w-full grid-cols-3 gap-2 font-mono text-[10px]">
                       <div>
-                        <p className="text-ink/50">ID NO.</p>
+                        <p className="text-ink/50">ID </p>
                         <p className="font-bold">{badge.idNo}</p>
                       </div>
                       <div>
@@ -373,7 +373,7 @@ export default function ProfileBadge({ explored, chapters, lastStamp }) {
         </motion.div>
       </motion.div>
 
-      <p className="mt-4 font-mono text-xs text-muted">Drag me · tap to flip</p>
+      <p className="mt-4 font-mono text-xs text-muted">Drag me : tap to flip</p>
     </div>
   );
 }

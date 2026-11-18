@@ -16,7 +16,7 @@ export default function LinkCue({ label, mode, ms }) {
         exit={{ opacity: 0, transition: { duration: 0.2 } }}
         transition={{ duration: dur, ease: easeInOutExpo }}
       >
-        <p className="font-mono text-sm">Up Next: Loading . . . .</p>
+        <p className="font-mono text-sm">Up Next: Loading . . . </p>
         <p className="text-[14vw] font-bold leading-none tracking-tighter">{label}</p>
       </motion.div>
     );
