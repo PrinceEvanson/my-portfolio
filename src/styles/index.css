@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-ink: #0a0a0b;
+  --color-ink-2: #131316;
+  --color-line: #26262c;
+  --color-paper: #f4f4f0;
+  --color-muted: #8b8b94;
+  --color-accent: #c6ff3d;
+  --color-accent-2: #7c5cff;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+
+  --animate-marquee: marquee 30s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    scroll-behavior: auto; /* Lenis handles smoothing */
+  }
+  body {
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+  /* Lenis recommended styles */
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-stopped { overflow: hidden; }
+}
+
+/* Hide native cursor only where the custom one is active */
+@media (hover: hover) and (pointer: fine) {
+  body.has-custom-cursor, body.has-custom-cursor a, body.has-custom-cursor button {
+    cursor: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
