@@ -71,13 +71,13 @@ export const chapters = [
 
 // The flippable company badge. TODO: replace the placeholders with your real details.
 export const badge = {
-  company: "Evanson Labs", 
-  mark: "P.", 
+  company: "Prince Evanson", 
+  mark: "PE", 
   idNo: "dGhlIGJlc3Q=",
   department: "Full-Stack Eng.",
   since: "2026", 
   status: "Open to work",
-  photo: "", 
+  photo: "https://media.licdn.com/dms/image/v2/D4D03AQHhn-BRHspLlQ/profile-displayphoto-crop_800_800/B4DZ1ztf.WGUAM-/0/1775762805364?e=1796860800&v=beta&t=kBKTFZYuSCw04RhSkezDn4L3kMG4vArYOojILXhm_cg", 
   credentials: [
     { label: "Education", value: "Moringa School" },
     { label: "Certifications", value: "Software Engineering" },

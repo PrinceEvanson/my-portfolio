@@ -12,10 +12,10 @@ import { easeOutExpo } from "@/lib/motion";
 import { badge } from "@/data/lab";
 import { profile } from "@/data/profile";
 
-const W = 300; 
+const W = 300;
 const H = 460;
-const BADGE_TOP = 70; 
-const CLIP_Y = BADGE_TOP + 14; 
+const BADGE_TOP = 70;
+const CLIP_Y = BADGE_TOP + 14;
 
 const face = { backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" };
 const initials = profile.name
@@ -104,7 +104,7 @@ export default function ProfileBadge({ explored, chapters, lastStamp }) {
   const total = chapters.length;
   const cleared = explored.size === total;
 
- 
+
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const swing = useSpring(useTransform(x, [-140, 0, 140], [16, 0, -16]), {
@@ -114,8 +114,7 @@ export default function ProfileBadge({ explored, chapters, lastStamp }) {
   const cord = useTransform(
     [x, y],
     ([lx, ly]) =>
-      `M ${W / 2} 0 C ${W / 2} ${CLIP_Y * 0.55}, ${W / 2 + lx * 0.55} ${
-        CLIP_Y * 0.35 + ly * 0.4
+      `M ${W / 2} 0 C ${W / 2} ${CLIP_Y * 0.55}, ${W / 2 + lx * 0.55} ${CLIP_Y * 0.35 + ly * 0.4
       }, ${W / 2 + lx} ${CLIP_Y + ly}`
   );
 
@@ -356,7 +355,7 @@ export default function ProfileBadge({ explored, chapters, lastStamp }) {
 
                   <div className="mt-auto flex items-center justify-between font-mono text-[10px]">
                     <span className="flex items-center gap-2 rounded-full border border-line px-3 py-1.5">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+                      <span className="h-2 w-0.5 animate-pulse rounded-full bg-accent" />
                       {badge.status}
                     </span>
                     <span className="text-muted">{profile.email}</span>
