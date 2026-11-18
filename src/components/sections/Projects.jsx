@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import Reveal from "@/components/ui/Reveal";
+import AppLink from "@/components/transition/AppLink";
 import { projects } from "@/data/projects";
 
 function ProjectCard({ project, index }) {
@@ -38,8 +39,8 @@ function ProjectCard({ project, index }) {
         </div>
 
         <div className="flex gap-4 font-mono text-sm md:col-span-2 md:justify-end">
-          <a href={project.live} className="hover:text-accent">Live ↗</a>
-          <a href={project.repo} className="hover:text-accent">Code ↗</a>
+          <AppLink href={project.live} className="hover:text-accent">Live ↗</AppLink>
+          <AppLink href={project.repo} className="hover:text-accent">Code ↗</AppLink>
         </div>
 
         {/* Colour wash that sweeps in on hover */}
@@ -60,7 +61,7 @@ export default function Projects() {
   return (
     <section id="work" className="px-6 py-32 md:px-12">
       <Reveal>
-        <p className="mb-12 font-mono text-sm text-accent">( 02 ) Selected work</p>
+        <p className="mb-12 font-mono text-sm text-accent">( 01 ) Selected work</p>
       </Reveal>
       <div>
         {projects.map((p, i) => (

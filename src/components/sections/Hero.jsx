@@ -2,9 +2,13 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import SplitText from "@/components/ui/SplitText";
 import Magnetic from "@/components/ui/Magnetic";
+import AppLink from "@/components/transition/AppLink";
+import { useReady } from "@/components/layout/ReadyContext";
+import { url } from "@/lib/links";
 import { profile } from "@/data/profile";
 
-export default function Hero({ ready }) {
+export default function Hero() {
+  const ready = useReady();
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
@@ -46,12 +50,13 @@ export default function Hero({ ready }) {
           transition={{ delay: 1.2, duration: 0.8 }}
         >
           <Magnetic>
-            <a
-              href="#work"
+            <AppLink
+              href={url("work/")}
+              label="Work"
               className="inline-block rounded-full bg-accent px-8 py-4 font-mono text-sm font-medium text-ink"
             >
-              See my work ↓
-            </a>
+              See my work ↗
+            </AppLink>
           </Magnetic>
         </motion.div>
       </motion.div>

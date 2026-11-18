@@ -1,7 +1,6 @@
-// TODO: replace the placeholders with your real projects.
 export const projects = [
   {
-    id: "FKC-Legal",
+    id: "FKC Legal",
     title: "FKC Legal",
     year: "2026",
     description: "Wide-Based Law Firm.",

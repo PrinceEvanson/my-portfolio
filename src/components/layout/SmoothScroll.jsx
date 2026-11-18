@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 // Lenis drives the scroll; GSAP's ticker feeds it frames so ScrollTrigger stays in sync.
 export default function SmoothScroll({ children }) {
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true, anchors: true });
 
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time) => lenis.raf(time * 1000);

@@ -12,7 +12,7 @@ export default function Skills() {
   return (
     <section id="skills" className="py-32">
       <Reveal>
-        <p className="mb-12 px-6 font-mono text-sm text-accent md:px-12">( 03 ) Toolbox</p>
+        <p className="mb-12 px-6 font-mono text-sm text-accent md:px-12">( 01 ) Toolbox</p>
       </Reveal>
       <Marquee items={items} className="py-6" />
     </section>
