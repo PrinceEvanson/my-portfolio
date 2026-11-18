@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { queryRows } from "@/data/backend";
+import { useDevView } from "@/lib/devview";
 
 const SORTS = [
-  { id: "year-desc", label: "Newest", sql: "ORDER BY year DESC", fn: (a, b) => b.year - a.year },
-  { id: "year-asc", label: "Oldest", sql: "ORDER BY year ASC", fn: (a, b) => a.year - b.year },
-  { id: "name", label: "A–Z", sql: "ORDER BY name ASC", fn: (a, b) => a.name.localeCompare(b.name) },
+  { id: "year-desc", label: "Newest", plain: "newest first", sql: "ORDER BY year DESC", fn: (a, b) => b.year - a.year },
+  { id: "year-asc", label: "Oldest", plain: "oldest first", sql: "ORDER BY year ASC", fn: (a, b) => a.year - b.year },
+  { id: "name", label: "A–Z", plain: "in A to Z order", sql: "ORDER BY name ASC", fn: (a, b) => a.name.localeCompare(b.name) },
 ];
 
 // Technologies that appear on at least two rows become filter chips.
@@ -29,8 +30,9 @@ function Sql({ text }) {
   );
 }
 
-// Change the filter or sort and watch the SQL rewrite itself and the rows rearrange.
+// Change the filter or sort and watch the list rearrange. Developer view also shows the SQL and the plan.
 export default function QueryDemo({ fg, onExplore }) {
+  const dev = useDevView();
   const [tag, setTag] = useState(null);
   const [sortId, setSortId] = useState("year-desc");
   const sort = SORTS.find((s) => s.id === sortId);
@@ -40,11 +42,13 @@ export default function QueryDemo({ fg, onExplore }) {
     [tag, sort]
   );
 
-  const sql = `SELECT id, name, year FROM projects${
-    tag ? ` WHERE '${tag}' = ANY(stack)` : ""
-  } ${sort.sql};`;
+  const sql = `SELECT id, name, year FROM projects${tag ? ` WHERE '${tag}' = ANY(stack)` : ""
+    } ${sort.sql};`;
   const plan = tag ? "Index Scan using idx_projects_stack" : "Seq Scan on projects";
   const ms = (0.12 + rows.length * 0.05).toFixed(2);
+
+  const sentence = `Showing ${rows.length} ${rows.length === 1 ? "project" : "projects"}${tag ? ` that use ${tag}` : ""
+    }, ${sort.plain}.`;
 
   const choose = (setter, value) => {
     setter(value);
@@ -53,6 +57,7 @@ export default function QueryDemo({ fg, onExplore }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2.5">
+      {!dev && <p className="font-mono text-[11px] opacity-70">Filter by tool</p>}
       <div className="flex flex-wrap gap-1.5">
         {[null, ...TAGS].map((t) => (
           <button
@@ -70,6 +75,7 @@ export default function QueryDemo({ fg, onExplore }) {
           </button>
         ))}
       </div>
+      {!dev && <p className="font-mono text-[11px] opacity-70">Sort by</p>}
       <div className="flex gap-1.5">
         {SORTS.map((s) => (
           <button
@@ -88,9 +94,13 @@ export default function QueryDemo({ fg, onExplore }) {
         ))}
       </div>
 
-      <pre className="whitespace-pre-wrap break-words rounded-lg bg-ink p-3 font-mono text-[11px] leading-relaxed text-paper">
-        <Sql text={sql} />
-      </pre>
+      {dev ? (
+        <pre className="whitespace-pre-wrap break-words rounded-lg bg-ink p-3 font-mono text-[11px] leading-relaxed text-paper">
+          <Sql text={sql} />
+        </pre>
+      ) : (
+        <p className="rounded-lg bg-ink p-3 text-xs leading-relaxed text-paper">{sentence}</p>
+      )}
 
       <ul className="flex min-h-[150px] flex-1 flex-col gap-1.5 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="popLayout" initial={false}>
@@ -117,7 +127,9 @@ export default function QueryDemo({ fg, onExplore }) {
       </ul>
 
       <p className="font-mono text-[11px] opacity-80">
-        {rows.length} {rows.length === 1 ? "row" : "rows"} · {ms}ms · {plan}
+        {dev
+          ? `${rows.length} ${rows.length === 1 ? "row" : "rows"} · ${ms}ms · ${plan}`
+          : `Found in ${ms} milliseconds. Much faster than a blink.`}
       </p>
     </div>
   );

@@ -7,15 +7,18 @@ import FlowDemo from "@/components/lab/demos/FlowDemo";
 import ApiDemo from "@/components/lab/demos/ApiDemo";
 import QueryDemo from "@/components/lab/demos/QueryDemo";
 import { chapters } from "@/data/lab";
-import { backendChapters } from "@/data/backend";
+import { backendChapters, backendChaptersDev } from "@/data/backend";
+import { setDevView, useDevView } from "@/lib/devview";
 import { stamp, useStamps } from "@/lib/stamps";
 
 const DEMOS = { flow: FlowDemo, api: ApiDemo, query: QueryDemo };
 const TOTAL = chapters.length + backendChapters.length;
 
 // "The Engine Room" (back end): the same idea as the Lab, but for what happens after the click.
+// Plain English by default, with a switch for the technical version.
 export default function Engine() {
   const { set: explored, last } = useStamps();
+  const dev = useDevView();
   const [flash, setFlash] = useState(null);
 
   // Little toast when a back-end stamp is earned (the badge itself is up in the Lab).
@@ -31,7 +34,7 @@ export default function Engine() {
   return (
     <section id="engine" className="px-6 py-32 md:px-12">
       <Reveal>
-        <p className="mb-6 font-mono text-sm text-accent">( 03 ) The Engine Room · Back end</p>
+        <p className="mb-6 font-mono text-sm text-accent">( 03 ) The Engine Room · Behind the scenes</p>
       </Reveal>
       <Reveal delay={0.1}>
         <h2 className="max-w-5xl text-5xl font-bold leading-[0.95] tracking-tighter md:text-8xl">
@@ -40,14 +43,35 @@ export default function Engine() {
       </Reveal>
       <Reveal delay={0.2}>
         <p className="mt-6 max-w-xl text-lg text-muted">
-          The other half of the stack: requests, APIs and data. Same rules as the Lab. Poke each
-          demo and it stamps the badge.
+          Every website has a hidden half: the part that stores, checks and delivers things. Same
+          rules as the Lab. Try each demo and it stamps the badge.
         </p>
       </Reveal>
 
-      <div className="mt-16">
+      <Reveal delay={0.3}>
+        <div
+          className="mt-8 inline-flex rounded-full border border-line p-1 font-mono text-xs"
+          role="group"
+          aria-label="Level of detail"
+        >
+          {[false, true].map((v) => (
+            <button
+              key={String(v)}
+              type="button"
+              onClick={() => setDevView(v)}
+              aria-pressed={dev === v}
+              className="rounded-full px-4 py-2 transition-colors duration-300"
+              style={dev === v ? { background: "#c6ff3d", color: "#0a0a0b" } : { color: "#8b8b94" }}
+            >
+              {v ? "Developer view" : "Plain English"}
+            </button>
+          ))}
+        </div>
+      </Reveal>
+
+      <div className="mt-10">
         <ChapterStage
-          chapters={backendChapters}
+          chapters={dev ? backendChaptersDev : backendChapters}
           demos={DEMOS}
           explored={explored}
           onExplore={stamp}

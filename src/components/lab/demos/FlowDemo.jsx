@@ -1,51 +1,60 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { flowNodes } from "@/data/backend";
+import { useDevView } from "@/lib/devview";
 
 const ROW = 34;
 const TONE = { ok: "#7cffb2", warn: "#ffb84d", bad: "#ff6b6b", dim: "#8b8b94" };
 const NODE_COLOR = { idle: "#8b8b94", ok: "#7cffb2", warn: "#ffb84d", error: "#ff6b6b", skip: "#8b8b94" };
 
-// Work out what each hop does for the chosen switches. Pure function: easy to read, easy to extend.
+// Work out what each hop does for the chosen switches. Every line has a plain-English text and a
+// developer text. Pure function: easy to read, easy to extend.
 function buildSteps({ cache, token, traffic, warm }) {
   const steps = [];
   let ms = 0;
-  const push = (node, status, text, cost, tone = "ok") => {
+  const push = (node, status, plain, dev, cost, tone = "ok") => {
     ms += cost;
-    steps.push({ node, status, tone, text: cost ? `${text}  ${cost}ms` : text });
+    steps.push({ node, status, tone, plain, dev: cost ? `${dev}  ${cost}ms` : dev });
   };
-  const finish = (code, label, warmNext = warm) => {
-    steps[steps.length - 1].result = { code, label, ms };
-    steps[steps.length - 1].warm = warmNext;
+  const finish = (code, label, plain, warmNext = warm, good = code < 400) => {
+    const last = steps[steps.length - 1];
+    last.result = { code, label, plain, ms, good };
+    last.warm = warmNext;
     return steps;
   };
 
-  push(0, "ok", "GET /api/orders/42", 0);
+  push(0, "ok", "You ask to see order #42", "GET /api/orders/42", 0);
 
   if (traffic === "spike") {
-    push(1, "error", "429 rate limit exceeded", 3, "bad");
-    return finish(429, "Too Many Requests");
+    push(1, "error", "Front door: too many people at once. Please wait.", "429 rate limit exceeded", 3, "bad");
+    return finish(429, "Too Many Requests", "Too busy, try again in a moment");
   }
-  push(1, "ok", "rate limit ok (97/100 per min)", 3);
+  push(1, "ok", "Front door: not too busy, come in", "rate limit ok (97/100 per min)", 3);
 
   if (token === "expired") {
-    push(2, "error", "401 token expired", 5, "bad");
-    return finish(401, "Unauthorized");
+    push(2, "error", "Security desk: your pass has expired", "401 token expired", 5, "bad");
+    return finish(401, "Unauthorized", "Please sign in again");
   }
-  push(2, "ok", "JWT verified", 5);
-  push(3, "ok", "handler getOrder(42)", 4);
+  push(2, "ok", "Security desk: your pass is good", "JWT verified", 5);
+  push(3, "ok", "Kitchen: working on it", "handler getOrder(42)", 4);
 
   if (cache && warm) {
-    push(4, "ok", "cache HIT", 2);
-    push(5, "skip", "database skipped", 0, "dim");
-    return finish(200, "OK (from cache)", true);
+    push(4, "ok", "Quick shelf: already had it ready!", "cache HIT", 2);
+    push(5, "skip", "Archive: no need to visit this time", "database skipped", 0, "dim");
+    return finish(200, "OK (from cache)", "Success, straight from the quick shelf", true);
   }
 
-  if (cache) push(4, "warn", "cache MISS", 2, "warn");
-  else push(4, "skip", "cache disabled", 0, "dim");
+  if (cache) push(4, "warn", "Quick shelf: not there yet", "cache MISS", 2, "warn");
+  else push(4, "skip", "Quick shelf: switched off", "cache disabled", 0, "dim");
 
-  push(5, "ok", cache ? "SELECT ... id=42, then cache SET" : "SELECT ... id=42 (index scan)", 18);
-  return finish(200, "OK", cache);
+  push(
+    5,
+    "ok",
+    cache ? "Archive: found it, and left a copy on the shelf" : "Archive: found it",
+    cache ? "SELECT ... id=42, then cache SET" : "SELECT ... id=42 (index scan)",
+    18
+  );
+  return finish(200, "OK", "Success", cache);
 }
 
 function Seg({ label, value, options, onChange, fg }) {
@@ -55,7 +64,7 @@ function Seg({ label, value, options, onChange, fg }) {
       <div className="flex overflow-hidden rounded-md" style={{ border: `1px solid ${fg}55` }}>
         {options.map((o) => (
           <button
-            key={o.value}
+            key={String(o.value)}
             type="button"
             onClick={() => onChange(o.value)}
             className="px-2.5 py-1 font-mono text-[11px] transition-colors"
@@ -69,8 +78,9 @@ function Seg({ label, value, options, onChange, fg }) {
   );
 }
 
-// Send a request through gateway -> auth -> service -> cache -> database and watch each hop.
+// Send a request through the front door, security desk, kitchen, shelf and archive, and watch each stop.
 export default function FlowDemo({ fg, onExplore }) {
+  const dev = useDevView();
   const [cache, setCache] = useState(false);
   const [token, setToken] = useState("valid");
   const [traffic, setTraffic] = useState("normal");
@@ -105,7 +115,7 @@ export default function FlowDemo({ fg, onExplore }) {
         setTimeout(() => {
           setPos(s.node);
           setStatuses((prev) => prev.map((v, idx) => (idx === s.node ? s.status : v)));
-          setLog((l) => [...l, { text: s.text, tone: s.tone }]);
+          setLog((l) => [...l, { plain: s.plain, dev: s.dev, tone: s.tone }]);
           if (i === steps.length - 1) {
             setResult(s.result);
             setWarm(s.warm);
@@ -116,13 +126,13 @@ export default function FlowDemo({ fg, onExplore }) {
     });
   };
 
-  // Turning the cache off empties it, so the next run is a MISS again.
+  // Turning the shelf off empties it, so the next run has to visit the archive again.
   const toggleCache = (v) => {
     setCache(v);
     if (!v) setWarm(false);
   };
 
-  const failed = result && result.code >= 400;
+  const failed = result && !result.good;
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -138,13 +148,15 @@ export default function FlowDemo({ fg, onExplore }) {
               style={{ top: i * ROW, height: ROW }}
             >
               <span
-                className="relative z-10 flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 text-[11px] font-bold transition-colors duration-300"
+                className="relative z-10 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-bold transition-colors duration-300"
                 style={{ borderColor: color, color, background: "#0a0a0b" }}
               >
                 {st === "ok" ? "✓" : st === "error" ? "✕" : st === "skip" ? "–" : i + 1}
               </span>
-              <span className="text-sm font-semibold">{n.label}</span>
-              <span className="font-mono text-[11px] opacity-60">{n.tech}</span>
+              <span className="whitespace-nowrap text-sm font-semibold">{dev ? n.dev : n.plain}</span>
+              <span className="min-w-0 truncate font-mono text-[11px] opacity-60">
+                {dev ? n.tech : n.note}
+              </span>
             </div>
           );
         })}
@@ -159,7 +171,7 @@ export default function FlowDemo({ fg, onExplore }) {
 
       <div className="grid gap-1.5">
         <Seg
-          label="Cache"
+          label={dev ? "Cache" : "Quick shelf"}
           fg={fg}
           value={cache}
           onChange={toggleCache}
@@ -169,28 +181,28 @@ export default function FlowDemo({ fg, onExplore }) {
           ]}
         />
         <Seg
-          label="Token"
+          label={dev ? "Token" : "Your pass"}
           fg={fg}
           value={token}
           onChange={setToken}
           options={[
-            { value: "valid", label: "valid" },
+            { value: "valid", label: dev ? "valid" : "good" },
             { value: "expired", label: "expired" },
           ]}
         />
         <Seg
-          label="Traffic"
+          label={dev ? "Traffic" : "Crowd"}
           fg={fg}
           value={traffic}
           onChange={setTraffic}
           options={[
             { value: "normal", label: "normal" },
-            { value: "spike", label: "spike" },
+            { value: "spike", label: dev ? "spike" : "rush hour" },
           ]}
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={run}
@@ -198,7 +210,7 @@ export default function FlowDemo({ fg, onExplore }) {
           className="rounded-full px-5 py-2 font-mono text-xs font-bold transition-opacity disabled:opacity-50"
           style={{ background: fg, color: "#4dd2ff" }}
         >
-          {running ? "Sending..." : "Send request"}
+          {running ? "On its way..." : "Send request"}
         </button>
         {result && (
           <motion.span
@@ -209,17 +221,24 @@ export default function FlowDemo({ fg, onExplore }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 400, damping: 18 }}
           >
-            {result.code} {result.label} · {result.ms}ms
+            {dev ? `${result.code} ${result.label}` : result.plain} · {result.ms}ms
           </motion.span>
         )}
       </div>
+      {!dev && result && !failed && (
+        <p className="font-mono text-[11px] opacity-70">
+          {result.ms} milliseconds. A blink takes about 300.
+        </p>
+      )}
 
       <div className="min-h-[96px] flex-1 overflow-hidden rounded-lg bg-ink p-3 font-mono text-[11px] leading-relaxed text-paper">
-        {log.length === 0 && <p className="text-muted">$ waiting for a request...</p>}
+        {log.length === 0 && (
+          <p className="text-muted">{dev ? "$ waiting for a request..." : "Press “Send request” to begin."}</p>
+        )}
         {log.slice(-6).map((l, i) => (
-          <p key={`${i}-${l.text}`} style={{ color: TONE[l.tone] }}>
+          <p key={`${i}-${l.plain}`} style={{ color: TONE[l.tone] }}>
             <span className="text-muted">› </span>
-            {l.text}
+            {dev ? l.dev : l.plain}
           </p>
         ))}
       </div>
