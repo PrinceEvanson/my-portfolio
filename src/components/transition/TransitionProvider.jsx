@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { AnimatePresence } from "motion/react";
 import { site } from "@/config/site";
 import { labelFor } from "@/lib/links";
-import { markLeaving } from "@/lib/arrival";
+import { captureCueWord, markLeaving } from "@/lib/arrival";
 import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
 import LinkCue from "./LinkCue";
 
@@ -47,7 +47,8 @@ export default function TransitionProvider({ children }) {
       const mode = newTab ? "tab" : "wipe";
       const ms = reduced ? 150 : mode === "tab" ? site.cueMs : site.wipeMs;
 
-      setCue({ label: label ?? labelFor(href), mode, ms });
+      const shown = label ?? labelFor(href);
+      setCue({ label: shown, mode, ms });
 
       timer.current = setTimeout(() => {
         if (mode === "tab") {
@@ -64,7 +65,7 @@ export default function TransitionProvider({ children }) {
           }
           // Pop-up blocker said no -> fall back to the same tab so the click is never lost.
         }
-        markLeaving(); // tells the next page to continue the wipe instead of flashing dark
+        markLeaving(mode === "wipe" ? captureCueWord(shown) : null); // tells the next page to continue the wipe instead of flashing dark
         window.location.href = target;
       }, ms);
     },
